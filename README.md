@@ -5,4 +5,4 @@ Coded with python3
 
 ## How to
 
-Simply run python3 run.py -l etna_login -p etna_passwd
+**Simply run :** python3 run.py -l etna_login -p etna_passwd
