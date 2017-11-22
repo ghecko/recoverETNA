@@ -53,7 +53,11 @@ def download_file(url, directory, cookie):
     except TypeError:
         opener = urllib.request.build_opener()
         opener.addheaders.append(('Cookie', 'authenticator={}'.format(cookie["authenticator"])))
-        total_length = int(opener.open(url).read().__sizeof__())
+        try:
+            total_length = int(opener.open(url).read().__sizeof__())
+        except urllib.error.HTTPError:
+            print(bcolors.WARNING + "set random length for : " + url + bcolors.ENDC)
+            total_length = 10000000
         r = requests.get(url, stream=True, cookies=cookie)
     with open(directory + "/" + local_filename, 'wb') as f:
         for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length / 1024) + 1):
