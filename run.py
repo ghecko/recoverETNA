@@ -1,7 +1,9 @@
 import argparse
 import json
 import os
+import re
 import requests
+import urllib.request
 from subprocess import call
 from clint.textui import progress
 
@@ -46,7 +48,13 @@ def download_file(url, directory, cookie):
     if not os.path.exists(directory):
         os.makedirs(directory)
     r = requests.get(url, stream=True, cookies=cookie)
-    total_length = int(r.headers.get('content-length'))
+    try:
+        total_length = int(r.headers.get('content-length'))
+    except TypeError:
+        opener = urllib.request.build_opener()
+        opener.addheaders.append(('Cookie', 'authenticator={}'.format(cookie["authenticator"])))
+        total_length = int(opener.open(url).read().__sizeof__())
+        r = requests.get(url, stream=True, cookies=cookie)
     with open(directory + "/" + local_filename, 'wb') as f:
         for chunk in progress.bar(r.iter_content(chunk_size=1024), expected_size=(total_length / 1024) + 1):
             if chunk:
@@ -116,12 +124,15 @@ def get_module(login, password, cookie):
         r = requests.get(activities_url, cookies=cookie)
         json_data = json.loads(r.text)
         for mod_activities in json_data:
-            if mod_activities["type"] == "cours":
-                download_course(mod_activities, cookie, "Bachelor")
-            elif mod_activities["type"] == "quest":
-                get_work(mod_activities, cookie, "Bachelor", login, password)
+            if not re.match(r'.*EMI.*', mod_activities["module"]["name"]):
+                if mod_activities["type"] == "cours":
+                    download_course(mod_activities, cookie, "Bachelor")
+                elif mod_activities["type"] == "quest":
+                    get_work(mod_activities, cookie, "Bachelor", login, password)
+                else:
+                    get_work(mod_activities, cookie, "Bachelor", login, password)
             else:
-                get_work(mod_activities, cookie, "Bachelor", login, password)
+                print(bcolors.FAIL + "Don't download : {}".format(mod_activities["module"]["name"]) + bcolors.ENDC)
 
     # Process for Master modules
     for activities in modules_Master:
