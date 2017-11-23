@@ -144,12 +144,13 @@ def get_module(login, password, cookie):
         r = requests.get(activities_url, cookies=cookie)
         json_data = json.loads(r.text)
         for mod_activities in json_data:
-            if mod_activities["type"] == "cours":
-                download_course(mod_activities, cookie, "Master")
-            elif mod_activities["type"] == "quest":
-                get_work(mod_activities, cookie, "Master", login, password)
-            else:
-                get_work(mod_activities, cookie, "Master", login, password)
+            if not re.match(r'.*EMI.*', mod_activities["module"]["name"]):
+                if mod_activities["type"] == "cours":
+                    download_course(mod_activities, cookie, "Master")
+                elif mod_activities["type"] == "quest":
+                    get_work(mod_activities, cookie, "Master", login, password)
+                else:
+                    get_work(mod_activities, cookie, "Master", login, password)
 
 
 def main(login, password):
